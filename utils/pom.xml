@@ -8,7 +8,7 @@
         <artifactId>AssetManagementSystemCloud</artifactId>
         <version>1.0-SNAPSHOT</version>
     </parent>
-
+    <packaging>jar</packaging> <!-- 修改：从 pom 改为 jar -->
     <artifactId>utils</artifactId>
 
     <properties>

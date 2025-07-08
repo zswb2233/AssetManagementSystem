@@ -1,7 +1,17 @@
+
 spring:
+  sql:
+    init:
+      mode: never  # 完全禁用数据库初始化检查
+  cloud:
+    nacos:
+      config:
+        enabled: false  # 禁用 Nacos 配置中心
+      discovery:
+        enabled: false  # （可选）禁用 Nacos 服务发现
   datasource:
     # 数据库连接 URL，your_database 需替换为实际要连接的数据库名
-    url: jdbc:mysql://localhost:3306/asset?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Beijing
+    url: jdbc:mysql://localhost:3306/asset?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai
     username: root
     password: 510502.f
     # MySQL 8.0 驱动类，固定写法
@@ -9,10 +19,13 @@ spring:
 
 mybatis-plus:
   mapper-locations: classpath*:mapper/*.xml  # XML 映射文件路径，支持通配符
-  typeAliasesPackage: ../models/com.entity             # 实体类扫描路径，可自动识别实体类别名
+  typeAliasesPackage: com.zswb.changedasset.model.entity   # 实体类扫描路径，可自动识别实体类别名
   configuration:
     map-underscore-to-camel-case: true
     cache-enabled: false
     call-setters-on-nulls: true
     #springboot 项目mybatis plus 设置 jdbcTypeForNull (oracle数据库需配置JdbcType.NULL, 默认是Other)
     jdbc-type-for-null: 'null'
+debug: false
+
+
