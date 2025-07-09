@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.zswb.changedasset.dao.ChangedassetDao;
 import com.zswb.changedasset.service.ChangedassetService;
 import com.zswb.model.entity.zcbdb;
+import com.zswb.model.entity.zcbdb2;
 import com.zswb.util.QueryUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,14 +20,14 @@ import java.util.Set;
 
 @Service
 @Slf4j
-public class ChangedassetServiceImpl extends ServiceImpl<ChangedassetDao, zcbdb> implements ChangedassetService {
+public class ChangedassetServiceImpl extends ServiceImpl<ChangedassetDao, zcbdb2> implements ChangedassetService {
     @Autowired
     private ChangedassetDao changedassetDao;
 
 
 
     @Override
-    public Map<String, Object> getPageWithQuery(Page<zcbdb> page, QueryWrapper<zcbdb> queryWrapper ,List<String> sortFields, List<String> sortOrders) {
+    public Map<String, Object> getPageWithQuery(Page<zcbdb2> page, QueryWrapper<zcbdb2> queryWrapper ,List<String> sortFields, List<String> sortOrders) {
         // 动态添加排序条件（安全过滤）
         if (sortFields != null && !sortFields.isEmpty()) {
             for (int i = 0; i < sortFields.size(); i++) {
@@ -43,7 +44,7 @@ public class ChangedassetServiceImpl extends ServiceImpl<ChangedassetDao, zcbdb>
         }
 
         // 执行分页查询
-        IPage<zcbdb> equipmentPage = this.page(page, queryWrapper);
+        IPage<zcbdb2> equipmentPage = this.page(page, queryWrapper);
 
         // 封装返回结果
         Map<String, Object> result = new HashMap<>();
@@ -57,7 +58,7 @@ public class ChangedassetServiceImpl extends ServiceImpl<ChangedassetDao, zcbdb>
     }
 
     @Override
-    public Map<String, Object> getPageWithCondition(Page<zcbdb> page, QueryWrapper<zcbdb> queryWrapper, List<String> require) {
+    public Map<String, Object> getPageWithCondition(Page<zcbdb2> page, QueryWrapper<zcbdb2> queryWrapper, List<String> require) {
         Map<String, Object> queryParams  = new HashMap<>();
         queryParams = QueryUtils.buildQueryParams(require);
         for (Map.Entry<String, Object> entry : queryParams.entrySet()) {
@@ -89,7 +90,7 @@ public class ChangedassetServiceImpl extends ServiceImpl<ChangedassetDao, zcbdb>
         }
 
         // 执行分页查询
-        IPage<zcbdb> equipmentPage = this.page(page, queryWrapper);
+        IPage<zcbdb2> equipmentPage = this.page(page, queryWrapper);
 
         // 封装返回结果
         Map<String, Object> result = new HashMap<>();

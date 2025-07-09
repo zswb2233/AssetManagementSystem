@@ -45,6 +45,7 @@ public class zcbdb implements Serializable {
     @TableField("gg")
     private String specification;
 
+    //下面两字段是单价。
     /** 金额 */
     @TableField("JE")
     private BigDecimal amount;
