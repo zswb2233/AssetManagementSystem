@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.zswb.model.entity.zcbdb;
 import com.zswb.model.entity.zcbdb2;
+import com.zswb.model.vo.zcbdbVO;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
@@ -25,12 +26,15 @@ public interface ChangedassetService extends IService<zcbdb2> {
      * @param sortOrders
      * @return
      */
-    public Map<String, Object> getPageWithQuery(Page<zcbdb2> page, QueryWrapper<zcbdb2> queryWrapper ,List<String> sortFields, // 排序字段列表
-                                                List<String> sortOrders  );
+    public Map<String, Object> getPageWithQuery(Page<zcbdb2> page, QueryWrapper<zcbdb2> queryWrapper , List<String> sortFields, // 排序字段列表
+                                                List<String> sortOrders ,List<String> require  );
     /**
      *
      */
-    public Map<String, Object> getPageWithCondition(Page<zcbdb2> page, QueryWrapper<zcbdb2> queryWrapper , List<String> require);
+
+
+    public Map<String, Object> getPageWithQuerytoOut(Page<zcbdb2> page, QueryWrapper<zcbdb2> queryWrapper , List<String> sortFields, // 排序字段列表
+                                                List<String> sortOrders ,List<String> require  );
 
 
 }

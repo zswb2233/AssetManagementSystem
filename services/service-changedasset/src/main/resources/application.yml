@@ -11,7 +11,7 @@ spring:
         enabled: false  # （可选）禁用 Nacos 服务发现
   datasource:
     # 数据库连接 URL，your_database 需替换为实际要连接的数据库名
-    url: jdbc:mysql://localhost:3306/asset?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai
+    url: jdbc:mysql://localhost:3306/asset?useUnicode=true&characterEncoding=utf8&allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=Asia/Shanghai
     username: root
     password: 510502.f
     # MySQL 8.0 驱动类，固定写法

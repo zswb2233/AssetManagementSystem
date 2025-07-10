@@ -49,7 +49,10 @@ public class zcbdbOutput {
 
     //变动日期
     private Date changeDate;
-    //变动原因
-    private String changeReason;
+
     //转入单位
+    private String transferInUnitName;
+    //变动原因//
+    private String changeReason;
+
 }
