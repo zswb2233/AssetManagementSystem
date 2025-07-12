@@ -33,11 +33,17 @@
         <spring-cloud-alibaba.version>2023.0.3.2</spring-cloud-alibaba.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <mybatisplus>3.5.12</mybatisplus>
+        <poi>5.2.3</poi>
+        <poi-ooxml>5.2.3</poi-ooxml>
+        <commons-fileupload>1.5</commons-fileupload>
+        <commons-io>2.15.0</commons-io>
     </properties>
 
     <dependencyManagement>
         <dependencies>
         <!--<dependencyManagement>：仅定义依赖模板，子模块需显式声明才能引入依赖。-->
+
+
             <dependency>
                 <groupId>com.zswb</groupId>
                 <artifactId>models</artifactId>
@@ -71,6 +77,30 @@
                 <version>${spring-cloud-alibaba.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
+            </dependency>
+            <!-- Excel 处理工具 -->
+            <dependency>
+                <groupId>org.apache.poi</groupId>
+                <artifactId>poi</artifactId>
+                <version>${poi}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.poi</groupId>
+                <artifactId>poi-ooxml</artifactId>
+                <version>${poi-ooxml}</version>
+            </dependency>
+
+            <!-- 文件上传支持,从浏览器上传文件到后端 -->
+            <dependency>
+                <groupId>commons-fileupload</groupId>
+                <artifactId>commons-fileupload</artifactId>
+                <version>${commons-fileupload}</version>
+            </dependency>
+            <!--简化对文件的操作-->
+            <dependency>
+                <groupId>commons-io</groupId>
+                <artifactId>commons-io</artifactId>
+                <version>${commons-io}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

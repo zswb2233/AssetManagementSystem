@@ -108,6 +108,30 @@
             <version>1.5.3.Final</version>
             <scope>provided</scope>
         </dependency>
+        <!-- Excel 处理工具 -->
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi</artifactId>
+
+        </dependency>
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi-ooxml</artifactId>
+
+        </dependency>
+
+        <!-- 文件上传支持,从浏览器上传文件到后端 -->
+        <dependency>
+            <groupId>commons-fileupload</groupId>
+            <artifactId>commons-fileupload</artifactId>
+
+        </dependency>
+        <!--简化对文件的操作-->
+        <dependency>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+
+        </dependency>
     </dependencies>
 
 
