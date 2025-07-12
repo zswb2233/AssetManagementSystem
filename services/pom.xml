@@ -15,6 +15,7 @@
     <packaging>pom</packaging>
     <modules>
         <module>service-changedasset</module>
+        <module>service-assetinbook</module>
     </modules>
 
     <properties>

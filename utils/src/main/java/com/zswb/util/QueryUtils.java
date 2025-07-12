@@ -1,12 +1,14 @@
 package com.zswb.util;
 
 
+import lombok.extern.slf4j.Slf4j;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
+@Slf4j
 public class QueryUtils {
 
     // 正则表达式模式，用于匹配条件字符串中的操作符和值
@@ -50,6 +52,7 @@ public class QueryUtils {
                         queryParams.put(field + "_lte", value);
                         break;
                     case "=":
+
                         queryParams.put(field, value);
                         break;
                     default:

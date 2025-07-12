@@ -70,7 +70,7 @@ public class ChangedassetController {
             @RequestParam(required = false) List<String> sortOrders,
             @RequestParam(required = false) List<String> require,
 
-            // 新增参数：是否打印全部数据（不分页）
+            // 新增参数：是否打印全部数据
             @RequestParam(name = "printAll", defaultValue = "true") boolean printAll,
             @RequestParam(name = "pageNum", defaultValue = "1") Integer pageNum,
             @RequestParam(name = "pageSize", defaultValue = "1000") Integer pageSize
