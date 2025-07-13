@@ -5,6 +5,7 @@ import com.zswb.model.entity.zczzb;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.List;
 
 public interface ZczzbService extends IService<zczzb> {
     /**
@@ -14,4 +15,6 @@ public interface ZczzbService extends IService<zczzb> {
      * @throws IOException 文件处理异常
      */
     int importExcel(MultipartFile file) throws IOException;
+
+    List<zczzb> getAllData();
 }

@@ -61,6 +61,11 @@ public class ZczzbServiceImpl extends ServiceImpl<ZczzbDao, zczzb> implements Zc
         }
     }
 
+    @Override
+    public List<zczzb> getAllData() {
+        return zczzbDao.selectList(null);
+    }
+
 
     public int saveBatch(List<zczzb> list) {
         if (list.isEmpty()) return 0;

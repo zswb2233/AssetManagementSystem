@@ -3,12 +3,18 @@ package com.zswb.assetinbook.controller;
 import com.alibaba.nacos.api.model.v2.Result;
 import com.zswb.assetinbook.service.ZcbdwsbService;
 import com.zswb.assetinbook.service.ZczzbService;
+import com.zswb.assetinbook.utils.ExcelUtils;
 import com.zswb.model.dto.AssetChangeDTO;
+import com.zswb.model.entity.zczzb;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 @Slf4j
@@ -64,4 +70,33 @@ public class AssetinbookController {
         }
     }
     //TODO 前端传回equipmentCode的列表，后端将对应数据写入excel传回前端提供下载。
+
+
+
+
+
+    // 下载Excel模板
+    @GetMapping("/download/excelmodel")
+    public void downloadTemplate(HttpServletResponse response) throws IOException {
+        response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        response.setCharacterEncoding("utf-8");
+        String fileName = URLEncoder.encode("资产信息模板.xlsx", StandardCharsets.UTF_8);
+        response.setHeader("Content-disposition", "attachment;filename=" + fileName);
+
+        ExcelUtils.generateTemplate(response.getOutputStream());
+    }
+
+    // 下载包含数据的Excel文件
+    @GetMapping("/download/exceldata")
+    public void downloadData(HttpServletResponse response) throws Exception {
+        response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        response.setCharacterEncoding("utf-8");
+        String fileName = URLEncoder.encode("资产信息数据.xlsx", StandardCharsets.UTF_8);
+        response.setHeader("Content-disposition", "attachment;filename=" + fileName);
+
+        // 从数据库或其他数据源获取数据
+        List<zczzb> dataList = zczzbService.getAllData();
+
+        ExcelUtils.generateExcelWithData(dataList, response.getOutputStream());
+    }
 }
