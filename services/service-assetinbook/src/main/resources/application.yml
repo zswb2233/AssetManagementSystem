@@ -9,6 +9,12 @@ spring:
         enabled: false  # 禁用 Nacos 配置中心
       discovery:
         enabled: false  # （可选）禁用 Nacos 服务发现
+        #excel的配置
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 10MB  # 单个文件最大大小
+      max-request-size: 10MB  # 单次请求最大大小
   datasource:
     # 数据库连接 URL，your_database 需替换为实际要连接的数据库名
     url: jdbc:mysql://localhost:3306/asset?useUnicode=true&characterEncoding=utf8&allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=Asia/Shanghai
@@ -26,6 +32,6 @@ mybatis-plus:
     call-setters-on-nulls: true
     #springboot 项目mybatis plus 设置 jdbcTypeForNull (oracle数据库需配置JdbcType.NULL, 默认是Other)
     jdbc-type-for-null: 'null'
-debug: false
+debug: true
 
 

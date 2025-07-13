@@ -2,12 +2,14 @@ package com.zswb.model.entity;
 
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
 import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.util.Date;
 @Data
+@TableName("zczzwsb") // 指定对应的数据库表名
 public class zcbdwsb {
     /**
      * 设备编号（主关键字）,资产编号
