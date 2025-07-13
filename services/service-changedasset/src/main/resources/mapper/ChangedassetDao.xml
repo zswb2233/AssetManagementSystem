@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.zswb.changedasset.dao.ChangedassetDao">
+
+    <!-- 自定义 SQL 语句示例 -->
+    <select id="selectByEquipmentCode" resultType="com.zswb.model.entity.zcbdb">
+        SELECT * FROM zcbdb WHERE zcbh = #{equipmentCode}
+    </select>
+
+    <!-- 其他自定义 SQL 语句可以在这里添加 -->
+</mapper>
