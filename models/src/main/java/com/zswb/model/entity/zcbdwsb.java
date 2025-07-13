@@ -9,7 +9,7 @@ import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.util.Date;
 @Data
-@TableName("zczzwsb") // 指定对应的数据库表名
+@TableName("zcbdwsb") // 指定对应的数据库表名
 public class zcbdwsb {
     /**
      * 设备编号（主关键字）,资产编号
@@ -119,7 +119,7 @@ public class zcbdwsb {
     private String storageLocationCode;
 
     /**
-     * 原存放地名称
+     * 存放地名称
      * 对应表中`transfer_in_location_code`字段
      */
     @TableField("storage_location_name")
