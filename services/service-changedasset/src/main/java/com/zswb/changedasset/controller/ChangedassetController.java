@@ -1,10 +1,12 @@
 package com.zswb.changedasset.controller;
 
+import com.alibaba.nacos.api.model.v2.ErrorCode;
 import com.alibaba.nacos.api.model.v2.Result;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage; // 新增：IPage 接口导入
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.itextpdf.text.DocumentException;
+import com.zswb.model.dto.IndividualZcbdbTreeNode;
 import com.zswb.model.entity.zcbdb;
 import com.zswb.changedasset.service.ChangedassetService;
 // 新增：导入 models 模块的实体类
@@ -218,6 +220,41 @@ public class ChangedassetController {
         return output;
     }
 
+    // 分户增减变动统计表（返回Nacos自带的Result格式）
+    @GetMapping("/statisticalTable/individualHousehold/inAndDecrease/inquire")
+    public Result<IndividualZcbdbTreeNode> getIndividualHouseholdinAndDecrease(
+            @RequestParam(name = "tableType",required = false) String tableType,
+            @RequestParam(name = "unitLevel",required = false) Integer unitLevel,
+            @RequestParam(name = "Financial_accounting_status", defaultValue = "-1") Integer status,
+            @RequestParam(name = "formDateFrom", required = true) @DateTimeFormat(pattern = "yyyy-MM-dd") Date formDateFrom,
+            @RequestParam(name = "formDateTo", required = true) @DateTimeFormat(pattern = "yyyy-MM-dd") Date formDateTo,
+            @RequestParam(name = "accountSet", defaultValue = "inCampus") String accountSet
+    ) {
+        try {
+            // 1. 参数默认值处理
+            tableType = tableType == null ? "分户增减变动统计表" : tableType;
+            unitLevel = unitLevel == null ? 1 : unitLevel;
+            status = status == null ? -1 : status;
+
+            // 2. 调用服务层获取树形结构数据（已完成子节点汇总）
+            IndividualZcbdbTreeNode root = changedassetService.showIndividualHouseholdinAndDecrease(
+                    tableType, unitLevel, status, formDateFrom, formDateTo, accountSet
+            );
+
+            // 3. 清除父节点引用（避免JSON序列化循环引用）
+            if (root != null) {
+                root.setParent(null);
+            }
+
+            // 4. 使用Nacos的Result.success()封装数据（code=0表示成功）
+            return Result.success(root);
+
+        } catch (Exception e) {
+            // 5. 异常时使用Nacos的Result.failure()返回错误信息
+            // 可根据实际场景选择ErrorCode（如SERVER_ERROR、PARAM_ERROR等）
+            return Result.failure(ErrorCode.SERVER_ERROR, new IndividualZcbdbTreeNode(null, e.getMessage()));
+        }
+    }
 
 
 }

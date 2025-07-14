@@ -14,6 +14,7 @@ public class AddressService {
     private static final Map<String,String>  STATUS_STATUS_NAME_MAP = new HashMap<>();
     private static final Map<String,String>  JFKM_JFKM_NAME_MAP = new HashMap<>();
     private static final Map<String,String>  CATEGORY_CODE = new HashMap<>();
+
     static {
         // 示例数据（实际应从数据库加载）
         // 也可以直接在这里定义，数据库也存一份吧。
