@@ -170,10 +170,10 @@ public class ChangedassetServiceImpl extends ServiceImpl<ChangedassetDao, zcbdb2
     @Override
     public IndividualZcbdbTreeNode showIndividualHouseholdinAndDecrease(String tableType, Integer unitLevel, Integer status, Date formDateFrom, Date formDateTo, String accountSet) {
         //分户增减变动统计表数据返回
-        //1.创建根节点。
-        //TODO 应该写一个静态类表示，并且该类与数据库里的数据对应（如何设计）
-        IndividualZcbdbTreeNode root=new IndividualZcbdbTreeNode("00","北京化工大学");
-        //2.找到在formDateFrom之前的数据。需要在在变动账表里找.
+
+
+
+        //2.找到在formDateFrom与formDateTo之间的数据。需要在在变动账表里找.
         //期初数=期末数−本期增加数+本期减少数
         QueryWrapper<zcbdb2> queryWrapper=new QueryWrapper<>();
         // 按时间范围查询：变动日期在 formDateFrom 和 formDateTo 之间
@@ -214,10 +214,19 @@ public class ChangedassetServiceImpl extends ServiceImpl<ChangedassetDao, zcbdb2
         //递归处理。
         // 3. 从根节点开始递归汇总所有子节点数据到父节点
         root.sumChildrenData();
-
+        //现在，将父节点置空，避免反复嵌套
+        removeParent(root);
         return root;
 
     }
+
+    private void removeParent(IndividualZcbdbTreeNode root) {
+        for(IndividualZcbdbTreeNode temp: root.getChildren()){
+            temp.setParent(null);
+            removeParent(temp);
+        }
+    }
+
     private void softDifStatus(String status, zcbdb2 temp, IndividualZcbdbTreeNode root) {
         // 获取单位编码，用于查找树节点
         String unitCode = temp.getUsingUnitCode();
@@ -383,12 +392,14 @@ public class ChangedassetServiceImpl extends ServiceImpl<ChangedassetDao, zcbdb2
         // 用于快速查找节点的映射表
         Map<String, IndividualZcbdbTreeNode> nodeMap = new HashMap<>();
 
-        // 根节点（默认为空或根据业务规则设置）
-        IndividualZcbdbTreeNode rootNode = null;
+        // 创建虚拟根节点
+        IndividualZcbdbTreeNode virtualRoot = null;
+
 
         // 第一遍遍历：创建所有节点并放入映射表
         for (dwb unit : dwbList) {
             IndividualZcbdbTreeNode node = new IndividualZcbdbTreeNode(unit.getUnitCode(), unit.getUnitName());
+            if(unit.getParentUnitCode()==null){ virtualRoot=node;}
             nodeMap.put(unit.getUnitCode(), node);
         }
 
@@ -403,45 +414,28 @@ public class ChangedassetServiceImpl extends ServiceImpl<ChangedassetDao, zcbdb2
 
             // 处理父节点
             String parentCode = unit.getParentUnitCode(); // 上级单位代码
+            if(parentCode==null) continue;
 
-            // 如果父节点为空或为自身，则视为根节点
-            if (parentCode == null || parentCode.isEmpty() || parentCode.equals(unit.getUnitCode())) {
-                if (rootNode == null) {
-                    //理论上只有根：大学才是根节点
-                    rootNode = currentNode;
-                }
-                continue;
-            }
+
 
             // 获取父节点
             IndividualZcbdbTreeNode parentNode = nodeMap.get(parentCode);
 
-            // 如果父节点存在，建立父子关系
-            if (parentNode != null) {
-                // 设置子节点的父引用
-                currentNode.setParent(parentNode);
 
-                // 初始化父节点的子列表（如果不含该条）
-                if (parentNode.getChildren() == null) {
-                    parentNode.setChildren(new ArrayList<>());
-                }
+            // 设置子节点的父引用
+            currentNode.setParent(parentNode);
 
-                // 将当前节点添加为子节点
-                parentNode.getChildren().add(currentNode);
-            } else {
-                // 如果父节点不存在，将当前节点作为根节点
-                if (rootNode == null) {
-                    rootNode = currentNode;
-                }
+            // 初始化父节点的子列表
+            if (parentNode.getChildren() == null) {
+                parentNode.setChildren(new ArrayList<>());
             }
+
+            // 将当前节点添加为子节点
+            parentNode.getChildren().add(currentNode);
         }
 
-        // 如果没有找到根节点，创建一个默认根节点
-        if (rootNode == null) {
-            rootNode = new IndividualZcbdbTreeNode("0000", "顶级单位");
-        }
 
-        return rootNode;
+        return virtualRoot;
     }
 
     //可以实现自定义业务逻辑

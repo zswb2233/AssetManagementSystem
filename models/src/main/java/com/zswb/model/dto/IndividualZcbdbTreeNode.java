@@ -128,6 +128,7 @@ public class IndividualZcbdbTreeNode {
      * 将子节点的数据累加到当前父节点对应索引位置
      * @param child 子节点
      */
+
     private void addChildDataToParent(IndividualZcbdbTreeNode child) {
         // 遍历数组的10个索引位置（0-9），逐个累加
         for (int i = 0; i < 10; i++) {
