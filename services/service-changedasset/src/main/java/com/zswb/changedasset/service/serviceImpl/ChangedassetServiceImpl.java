@@ -347,39 +347,81 @@ public class ChangedassetServiceImpl extends ServiceImpl<ChangedassetDao, zcbdb2
         return null; // 未找到
     }
     // 更新增加数据的辅助方法
-    private void updateIncreaseData(IndividualZcbdbTreeNode node, zcbdb2 temp,int index) {
-        BigDecimal before_count=temp.getBeforeCount();
-        BigDecimal changed_count=temp.getChangedCount();
-        BigDecimal before_amount=temp.getAmount();
-        BigDecimal changed_amount=temp.getChangedAmount();
-        //0
-        node.addNowDeCountWithId(0,before_count);
-        node.addNowDeAmountWithId(0,before_amount);
-        //index
-        node.addNowDeCountWithId(index,changed_count);
-        node.addNowDeAmountWithId(index,changed_amount);
-
-
-        //4 合计
-        for(int i=1;i<4;i++){
-            node.addNowDeCountWithId(i,node.getNowDeCount()[i]);
-            node.addNowDeAmountWithId(i,node.getNowDeAmount()[i]);
+    public void updateIncreaseData(IndividualZcbdbTreeNode node, zcbdb2 temp, int index) {
+        // 检查参数有效性
+        if (node == null || temp == null) {
+            throw new IllegalArgumentException("无效参数");
         }
 
-        //8 合计
-        for(int i=5;i<8;i++){
-            node.addNowDeCountWithId(i,node.getNowDeCount()[i]);
-            node.addNowDeAmountWithId(i,node.getNowDeAmount()[i]);
-        }
-        //9 期末
-        node.addNowDeCountWithId(9,node.getNowDeCount()[4]);
-        node.addNowDeCountWithId(9,node.getNowDeCount()[8]);
-        node.addNowDeAmountWithId(9,node.getNowDeCount()[4]);
-        node.addNowDeAmountWithId(9,node.getNowDeCount()[8]);
+        BigDecimal beforeCount = temp.getBeforeCount();
+        BigDecimal changedCount = temp.getChangedCount();
+        BigDecimal beforeAmount = temp.getAmount();
+        BigDecimal changedAmount = temp.getChangedAmount();
 
+        // 0. 设置初期值
+        node.setNowDeCountWithId(0, beforeCount);
+        node.setNowDeAmountWithId(0, beforeAmount);
+
+        // index. 设置变动值(购置、校内转入、其他)
+        node.setNowDeCountWithId(index, changedCount);
+        node.setNowDeAmountWithId(index, changedAmount);
+
+        // 计算并设置合计值
+        node.calculateSummaryValues();
     }
 
+    /**
+     * 计算并设置合计值和期末值
+     */
+    private void calculateAndSetSummaryValues(IndividualZcbdbTreeNode node) {
+        // 4. 计算增加部分的合计(购置+校内转入+其他)
+        BigDecimal addCountSum = BigDecimal.ZERO;
+        BigDecimal addAmountSum = BigDecimal.ZERO;
+        for (int i = 1; i < 4; i++) {
+            addCountSum = addCountSum.add(node.getNowDeCount()[i]);
+            addAmountSum = addAmountSum.add(node.getNowDeAmount()[i]);
+        }
+        node.setNowDeCountWithId(4, addCountSum);
+        node.setNowDeAmountWithId(4, addAmountSum);
 
+        // 8. 计算减少部分的合计(报废报损+校内转出+其他)
+        // 注：此处假设减少部分的值已通过其他方式设置
+        BigDecimal deCountSum = BigDecimal.ZERO;
+        BigDecimal deAmountSum = BigDecimal.ZERO;
+        for (int i = 5; i < 8; i++) {
+            deCountSum = deCountSum.add(node.getNowDeCount()[i]);
+            deAmountSum = deAmountSum.add(node.getNowDeAmount()[i]);
+        }
+        node.setNowDeCountWithId(8, deCountSum);
+        node.setNowDeAmountWithId(8, deAmountSum);
+
+        // 9. 计算期末值(初期值 + 增加合计 - 减少合计)
+        BigDecimal endCount = node.getNowDeCount()[0].add(node.getNowDeCount()[4]).subtract(node.getNowDeCount()[8]);
+        BigDecimal endAmount = node.getNowDeAmount()[0].add(node.getNowDeAmount()[4]).subtract(node.getNowDeAmount()[8]);
+        node.setNowDeCountWithId(9, endCount);
+        node.setNowDeAmountWithId(9, endAmount);
+
+//        // 若需要单位转换，在这里处理
+//        if ("万".equals(jldw)) {
+//            convertToTenThousand(node);
+//        }
+    }
+
+    /**
+     * 将所有数值转换为"万"为单位
+     */
+    private void convertToTenThousand(IndividualZcbdbTreeNode node) {
+        final BigDecimal DIVISOR = BigDecimal.valueOf(10000);
+
+        for (int i = 0; i < 10; i++) {
+            if (node.getNowDeCount()[i] != null) {
+                node.setNowDeCountWithId(i, node.getNowDeCount()[i].divide(DIVISOR, 4, BigDecimal.ROUND_HALF_UP));
+            }
+            if (node.getNowDeAmount()[i] != null) {
+                node.setNowDeAmountWithId(i, node.getNowDeAmount()[i].divide(DIVISOR, 4, BigDecimal.ROUND_HALF_UP));
+            }
+        }
+    }
 
     /**
      * 构建单位树形结构

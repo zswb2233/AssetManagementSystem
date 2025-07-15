@@ -281,7 +281,7 @@ public class ChangedassetController {
             );
             // 2. 生成PDF
             PdfGenerationService pdfService = new PdfGenerationService();
-            byte[] pdfBytes = pdfService.generateIndividualHouseholdPdf(unitLevel,root, tableName,tableUnit,tableDate,jldw);
+            byte[] pdfBytes = pdfService.generateIndividualHouseholdPdf(unitLevel,root, tableName,tableUnit,tableDate,formDateFrom,formDateTo,jldw);
 
             // 3. 构建响应
             HttpHeaders headers = new HttpHeaders();
