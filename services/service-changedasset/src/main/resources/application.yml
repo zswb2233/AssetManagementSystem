@@ -28,4 +28,8 @@ mybatis-plus:
     jdbc-type-for-null: 'null'
 debug: false
 
+# application-dev1.properties
+server:
+
+  port: 8080
 
