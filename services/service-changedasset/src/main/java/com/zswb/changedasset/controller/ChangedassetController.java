@@ -351,16 +351,19 @@ public class ChangedassetController {
     ) {
         try {
             // 1. 调用服务层获取树形结构数据（已完成子节点汇总）
+            List<sbflbDTO> sbflbDTOList= changedassetService.showIndividualClassificationinAndDecrease(
+                    tableType,  status, formDateFrom, formDateTo, accountSet
+            );
 
             // 2. 生成PDF
             PdfGenerationService pdfService = new PdfGenerationService();
-            byte[] pdfBytes = pdfService.generateIndividualCategoryPdf(tableName,tableUnit,tableDate,formDateFrom,formDateTo,jldw);
+            byte[] pdfBytes = pdfService.generateIndividualCategoryPdf(sbflbDTOList,tableName,tableUnit,tableDate,formDateFrom,formDateTo,jldw);
 
             // 3. 构建响应
             HttpHeaders headers = new HttpHeaders();
             headers
                     .setContentType(MediaType.APPLICATION_PDF);
-            String fileName = URLEncoder.encode("分户增减变动统计表.pdf", StandardCharsets.UTF_8.name());
+            String fileName = URLEncoder.encode("分类增减变动统计表.pdf", StandardCharsets.UTF_8.name());
             headers
                     .setContentDispositionFormData("attachment", fileName);
 

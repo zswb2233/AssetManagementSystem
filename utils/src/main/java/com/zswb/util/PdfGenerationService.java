@@ -338,6 +338,7 @@ package com.zswb.util;
 import com.itextpdf.text.*;
 import com.itextpdf.text.pdf.*;
 import com.zswb.model.dto.IndividualZcbdbTreeNode;
+import com.zswb.model.dto.sbflbDTO;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -616,7 +617,7 @@ public class PdfGenerationService {
         BigDecimal[] dataList = isQuantity ? node.getNowDeCount() : node.getNowDeAmount();
 
         // 检查 dataList 不为 null 且 jldw 为 "万"
-        if ((isQuantity)&&dataList != null && "万".equals(jldw)) {
+        if ((!isQuantity)&&dataList != null && "万".equals(jldw)) {
             for (int i = 0; i < dataList.length; i++) {
                 if (dataList[i] != null) {
                     // 指定精度和舍入模式，避免除不尽异常
@@ -643,6 +644,238 @@ public class PdfGenerationService {
             cell.setPadding(5);
             table.addCell(cell);
         }
+    }
+
+    public byte[] generateIndividualCategoryPdf(List<sbflbDTO> sbflbDTOList,String tableName, String tableUnit, Date tableDate, Date formDateFrom, Date formDateTo, String jldw) throws DocumentException {
+
+            // 创建内存输出流
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+
+            // 初始化文档（A4纸，纵向）
+            Document document = new Document(PageSize.A4.rotate(), 50, 50, 50, 50); // 横向布局
+            PdfWriter writer = PdfWriter.getInstance(document, baos);
+
+            // 设置页脚区域
+            writer.setBoxSize("footer", new Rectangle(36, 36, 559, 50));
+
+            // 添加页脚
+            writer.setPageEvent(new HeaderFooter());
+
+            // 打开文档
+            document.open();
+
+            // 1. 添加标题
+            Paragraph title = new Paragraph(tableName, titleFont);
+            title.setAlignment(Element.ALIGN_CENTER); // 居中对齐
+            document.add(title);
+
+            // 添加空行分隔
+            document.add(new Paragraph("\n"));
+
+
+//        ///////////
+            //创建一个三列的表格用于放置在左右内容
+            PdfPTable infoTable = new PdfPTable(3);
+            infoTable.setWidthPercentage(80);//宽度占满页面
+            infoTable.setSpacingAfter(2);//与下方表格的间隔
+
+            //设置列宽比例
+            float[] infoTableWidths={3f,3f,2f};
+            infoTable.setWidths(infoTableWidths);
+
+            //左侧内容：制表单位
+            Paragraph leftInfo = new Paragraph("制表单位："+tableUnit,infoFont);
+            PdfPCell leftCell = new PdfPCell(leftInfo);
+            leftCell.setBorder(Rectangle.NO_BORDER); // 去除边框
+            leftCell.setHorizontalAlignment(Element.ALIGN_LEFT); // 左对齐
+            infoTable.addCell(leftCell);
+            //中侧内容:资产入账时间
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+            String rightContent =
+                    " 资产入账时间：" + sdf.format(formDateFrom) + "至" + sdf.format(formDateTo);
+            Paragraph midInfo = new Paragraph(rightContent, infoFont);
+            PdfPCell midCell = new PdfPCell(midInfo);
+            midCell.setBorder(Rectangle.NO_BORDER); // 去除边框
+            midCell.setHorizontalAlignment(Element.ALIGN_CENTER); // 右对齐
+            infoTable.addCell(midCell);
+            //右侧内容：(单位：台件、元/万元）
+            Paragraph rightInfo = new Paragraph("(单位：台件、"+jldw+"）",infoFont);
+            PdfPCell rightCell = new PdfPCell(rightInfo);
+            rightCell.setBorder(Rectangle.NO_BORDER); // 去除边框
+            rightCell.setHorizontalAlignment(Element.ALIGN_LEFT); // 左对齐
+            infoTable.addCell(rightCell);
+            //将信息表格添加到文档
+            document.add(infoTable);
+//        //////
+
+
+
+
+            // 2. 创建表格（12列：单位名称、期初数(数量/金额)、本期增加数(购置/校内转入/其它/合计)、本期减少数(报废报损/校内转出/其它/合计)、期末数）
+            PdfPTable table = new PdfPTable(10);
+            table.setWidthPercentage(95); // 表格宽度占页面百分比
+
+            // 定义列宽
+            float[] columnWidths = {180f, 43f, 110f, 100f, 100f, 110f, 100f,  100f,110f, 110f};
+            table.setWidths(columnWidths);
+            table.setHorizontalAlignment(Element.ALIGN_CENTER); // 表格居中
+
+            // 3. 添加表头
+            addHeaderCellsForCategoryPdf(table);
+
+            // 4. 递归添加树形结构数据到表格
+            addCategoryListToTable(table, sbflbDTOList,jldw);
+
+            // 将表格添加到文档
+            document.add(table);
+
+            // 添加说明文字
+            Paragraph note = new Paragraph("注：房屋、土地、构筑物分别按建筑面积、使用权面积、构筑物计量数进行统计。", smallFont);
+            note.setAlignment(Element.ALIGN_LEFT);
+            document.add(note);
+
+            // 添加制表日期和制表人
+            Paragraph footerPara = new Paragraph("制表日期：" + new SimpleDateFormat("yyyy/MM/dd").format(tableDate) +
+                    " 制表人：admin", smallFont);
+            footerPara.setAlignment(Element.ALIGN_RIGHT);
+            document.add(footerPara);
+
+            // 关闭文档
+            document.close();
+
+            return baos.toByteArray();
+    }
+
+    private void addCategoryListToTable(PdfPTable table, List<sbflbDTO> sbflbDTOList, String jldw) {
+        for(sbflbDTO t:sbflbDTOList){
+            // 创建单位名称单元格，合并两行
+            Paragraph unitNamePara = new Paragraph(t.getFldm()+"."+t.getFlmc(), contentFont);
+
+
+            PdfPCell unitNameCell = new PdfPCell(unitNamePara);
+            unitNameCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+            unitNameCell.setPadding(5);
+            unitNameCell.setRowspan(2); // 单位名称跨两行
+
+            table.addCell(unitNameCell);
+            // 创建新的单元格，里面是数量，金额，跨两行
+            // 第一行数据
+            Paragraph firstLine = new Paragraph("数量",contentFont);
+            // 第二行数据
+            Paragraph secondLine = new Paragraph("金额",contentFont);
+
+            // 创建一个单元格，添加两行数据
+            PdfPCell cell = new PdfPCell();
+            cell.addElement(firstLine);
+            cell.addElement(secondLine);
+
+            // 设置单元格跨两行
+            cell.setRowspan(2);
+
+            // 添加合并后的单元格到表格
+            table.addCell(cell);
+
+
+
+
+            // 添加数量数据
+            addDataRowForCategory(table, t, true,jldw);
+
+            // 添加金额行（不需要再添加单位名称单元格）
+            addDataRowForCategory(table, t, false,jldw);
+
+
+        }
+
+    }
+
+    private void addDataRowForCategory(PdfPTable table, sbflbDTO t, boolean isQuantity, String jldw) {
+        BigDecimal[] dataList = isQuantity ? t.getNowDeCount() : t.getNowDeAmount();
+        //(isQuantity)
+        // 检查 dataList 不为 null 且 jldw 为 "万"
+        if ((!isQuantity)&&dataList != null && "万".equals(jldw)) {
+            for (int i = 0; i < dataList.length; i++) {
+                if (dataList[i] != null) {
+                    // 指定精度和舍入模式，避免除不尽异常
+                    dataList[i] = dataList[i].divide(
+                            BigDecimal.valueOf(10000),
+                            4, // 保留4位小数
+                            RoundingMode.HALF_UP // 四舍五入
+                    );
+                }
+            }
+        }
+        // 为每行创建8个单元格
+        for (int i = 0; i < 8; i++) {
+            String value = "0";
+            if (dataList != null && i < dataList.length) {
+                value = dataList[i].toString();
+            }
+
+            PdfPCell cell = new PdfPCell(new Phrase(value, contentFont));
+            // 设置水平对齐为右对齐
+            cell.setHorizontalAlignment(Element.ALIGN_RIGHT);
+            // 设置垂直对齐为居中
+            cell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+            cell.setPadding(5);
+            table.addCell(cell);
+        }
+    }
+
+    private void addHeaderCellsForCategoryPdf(PdfPTable table) {
+        // 合并单元格
+        //单位名称下面有单位与数量金额
+        PdfPCell unitCell = new PdfPCell(new Phrase("分类名称", headerFont));
+        unitCell.setHorizontalAlignment(Element.ALIGN_CENTER);
+        unitCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+        unitCell.setBackgroundColor(BaseColor.LIGHT_GRAY);
+        unitCell.setColspan(2);
+        unitCell.setRowspan(2);
+        table.addCell(unitCell);
+
+        // 期初数
+        PdfPCell beginCell = new PdfPCell(new Phrase("期初数", headerFont));
+        beginCell.setHorizontalAlignment(Element.ALIGN_CENTER);
+        beginCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+        beginCell.setBackgroundColor(BaseColor.LIGHT_GRAY);
+        beginCell.setColspan(1);
+        beginCell.setRowspan(2);
+        table.addCell(beginCell);
+
+        // 本期增加数
+        PdfPCell increaseCell = new PdfPCell(new Phrase("本期增加数", headerFont));
+        increaseCell.setHorizontalAlignment(Element.ALIGN_CENTER);
+        increaseCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+        increaseCell.setBackgroundColor(BaseColor.LIGHT_GRAY);
+        increaseCell.setColspan(3);
+        table.addCell(increaseCell);
+
+        // 本期减少数
+        PdfPCell decreaseCell = new PdfPCell(new Phrase("本期减少数", headerFont));
+        decreaseCell.setHorizontalAlignment(Element.ALIGN_CENTER);
+        decreaseCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+        decreaseCell.setBackgroundColor(BaseColor.LIGHT_GRAY);
+        decreaseCell.setColspan(3);
+        table.addCell(decreaseCell);
+
+        // 期末数
+        PdfPCell endCell = new PdfPCell(new Phrase("期末数", headerFont));
+        endCell.setHorizontalAlignment(Element.ALIGN_CENTER);
+        endCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+        endCell.setBackgroundColor(BaseColor.LIGHT_GRAY);
+        endCell.setColspan(1);
+        endCell.setRowspan(2);
+        table.addCell(endCell);
+
+        // 二级表头
+        table.addCell(new PdfPCell(new Phrase("购置", headerFont)));
+
+        table.addCell(new PdfPCell(new Phrase("其它", headerFont)));
+        table.addCell(new PdfPCell(new Phrase("合计", headerFont)));
+        table.addCell(new PdfPCell(new Phrase("报废报损", headerFont)));
+
+        table.addCell(new PdfPCell(new Phrase("其它", headerFont)));
+        table.addCell(new PdfPCell(new Phrase("合计", headerFont)));
     }
 
     // 页眉页脚类
