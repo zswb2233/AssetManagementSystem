@@ -132,6 +132,11 @@
             <artifactId>commons-io</artifactId>
 
         </dependency>
+        <dependency>
+            <groupId>com.alibaba</groupId>
+            <artifactId>easyexcel</artifactId>
+            <version>3.3.0</version> <!-- 版本号可根据需求调整，建议使用 3.x 及以上稳定版 -->
+        </dependency>
     </dependencies>
 
 

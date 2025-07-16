@@ -14,9 +14,7 @@ import com.zswb.changedasset.service.ChangedassetService;
 import com.zswb.model.entity.zcbdb2;
 import com.zswb.model.output.zcbdbOutput;
 import com.zswb.model.vo.zcbdbVO;
-import com.zswb.util.PdfGenerationService;
-import com.zswb.util.PdfGenerator2;
-import com.zswb.util.QueryUtils;
+import com.zswb.util.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -301,6 +299,52 @@ public class ChangedassetController {
         }
 
     }
+    @GetMapping("/statisticalTable/individualHousehold/inAndDecrease/inquireExcel")
+    public ResponseEntity<byte[]> getIndividualHouseholdinAndDecreaseExcel(
+            // 参数与PDF接口相同
+            @RequestParam(name = "tableType",required = false) String tableType,
+            @RequestParam(name = "unitLevel",required = true) Integer unitLevel,
+            @RequestParam(name = "Financial_accounting_status", defaultValue = "-1") Integer status,
+            @RequestParam(name = "formDateFrom", required = true) @DateTimeFormat(pattern = "yyyy-MM-dd") Date formDateFrom,
+            @RequestParam(name = "formDateTo", required = true) @DateTimeFormat(pattern = "yyyy-MM-dd") Date formDateTo,
+            @RequestParam(name = "accountSet", defaultValue = "inCampus") String accountSet,
+            //下面是打印的项
+            @RequestParam(name="tableName" ,defaultValue="中国大学分户增减变动统计表") String tableName,//表头名
+            @RequestParam(name="tableUnit",defaultValue = "中国大学") String tableUnit,//制表单位
+            @RequestParam(name = "tableDate", required = true)@DateTimeFormat(pattern = "yyyy-MM-dd") Date tableDate,//制表时间
+            @RequestParam(name="jldw",defaultValue = "元") String jldw //计量单位，元与万元
+    ) {
+        try {
+            // 获取树形结构数据
+            IndividualZcbdbTreeNode root = changedassetService.showIndividualHouseholdinAndDecrease(
+                    tableType, unitLevel, status, formDateFrom, formDateTo, accountSet
+            );
+
+            // 验证数据
+            if (root == null || root.getChildren() == null || root.getChildren().isEmpty()) {
+                throw new IllegalArgumentException("数据为空，无法生成Excel");
+            }
+
+            // 生成Excel
+            ExcelGenerationHouseholdService excelService = new ExcelGenerationHouseholdService();
+            byte[] excelBytes = excelService.generateIndividualHouseholdExcel(
+                    unitLevel, root, tableName, tableUnit, tableDate, formDateFrom, formDateTo, jldw);
+
+            // 构建响应
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_OCTET_STREAM); // 修正内容类型
+            String fileName = URLEncoder.encode("分户增减变动统计表.xlsx", StandardCharsets.UTF_8.name()); // 修正扩展名
+            headers.setContentDispositionFormData("attachment", fileName);
+
+            return ResponseEntity.ok()
+                    .headers(headers)
+                    .body(excelBytes);
+        } catch (Exception e) {
+            log.error("生成Excel失败", e); // 记录详细日志
+            return ResponseEntity.status(500)
+                    .body(("生成Excel失败：" + e.getMessage()).getBytes());
+        }
+    }
 
     // 分类增减变动统计表（返回Nacos自带的Result格式）Classification
     @GetMapping("/statisticalTable/individualClassification/inAndDecrease/inquire")
@@ -373,6 +417,54 @@ public class ChangedassetController {
         } catch (Exception e) {
             return ResponseEntity.status(500)
                     .body(("生成PDF失败：" + e.getMessage()).getBytes());
+        }
+    }
+
+    //=================分类增减变动excel===================
+    // 分类增减变动统计表pdf
+    @GetMapping("/statisticalTable/individualClassification/inAndDecrease/inquireExcel")
+    public ResponseEntity<byte[]> getIndividualClassificationinAndDecreaseExcel(
+            @RequestParam(name = "tableType",required = false) String tableType,
+
+            @RequestParam(name = "Financial_accounting_status", defaultValue = "-1") Integer status,
+            @RequestParam(name = "formDateFrom", required = true) @DateTimeFormat(pattern = "yyyy-MM-dd") Date formDateFrom,
+            @RequestParam(name = "formDateTo", required = true) @DateTimeFormat(pattern = "yyyy-MM-dd") Date formDateTo,
+            @RequestParam(name = "accountSet", defaultValue = "inCampus") String accountSet,
+            //下面是打印的项
+            @RequestParam(name="tableName" ,defaultValue="中国大学分类增减变动统计表") String tableName,//表头名
+            @RequestParam(name="tableUnit",defaultValue = "中国大学") String tableUnit,//制表单位
+            @RequestParam(name = "tableDate", required = true)@DateTimeFormat(pattern = "yyyy-MM-dd") Date tableDate,//制表时间
+            @RequestParam(name="jldw",defaultValue = "元") String jldw //计量单位，元与万元
+    ) {
+        try {
+            // 1. 调用服务层获取树形结构数据（已完成子节点汇总）
+            List<sbflbDTO> sbflbDTOList= changedassetService.showIndividualClassificationinAndDecrease(
+                    tableType,  status, formDateFrom, formDateTo, accountSet
+            );
+
+            // 2. 生成Excel
+            ExcelGenerationService excelService = new ExcelGenerationService() {
+                @Override
+                public byte[] generateIndividualCategoryExcel(List<sbflbDTO> sbflbDTOList, String tableName, String tableUnit, Date tableDate, Date formDateFrom, Date formDateTo, String jldw) throws IOException {
+                    return ExcelGenerationService.super.generateIndividualCategoryExcel(sbflbDTOList, tableName, tableUnit, tableDate, formDateFrom, formDateTo, jldw);
+                }
+            };
+            byte[] excelBytes = excelService.generateIndividualCategoryExcel(sbflbDTOList,tableName,tableUnit,tableDate,formDateFrom,formDateTo,jldw);
+
+            // 3. 构建响应
+            HttpHeaders headers = new HttpHeaders();
+            headers
+                    .setContentType(MediaType.APPLICATION_PDF);
+            String fileName = URLEncoder.encode("分类增减变动统计表.xls", StandardCharsets.UTF_8.name());
+            headers
+                    .setContentDispositionFormData("attachment", fileName);
+
+            return ResponseEntity.ok()
+                    .headers(headers)
+                    .body(excelBytes);
+        } catch (Exception e) {
+            return ResponseEntity.status(500)
+                    .body(("生成Excel失败：" + e.getMessage()).getBytes());
         }
     }
 }
