@@ -306,7 +306,7 @@ public class ChangedassetController {
     @GetMapping("/statisticalTable/individualClassification/inAndDecrease/inquire")
     public Result<List<sbflbDTO>> getIndividualClassificationinAndDecrease(
             @RequestParam(name = "tableType",required = false) String tableType,
-            @RequestParam(name = "unitLevel",required = false) Integer unitLevel,
+
             @RequestParam(name = "Financial_accounting_status", defaultValue = "-1") Integer status,
             @RequestParam(name = "formDateFrom", required = true) @DateTimeFormat(pattern = "yyyy-MM-dd") Date formDateFrom,
             @RequestParam(name = "formDateTo", required = true) @DateTimeFormat(pattern = "yyyy-MM-dd") Date formDateTo,
@@ -315,12 +315,12 @@ public class ChangedassetController {
         try {
             // 1. 参数默认值处理
             tableType = tableType == null ? "分类增减变动统计表" : tableType;
-            unitLevel = unitLevel == null ? 1 : unitLevel;
+
             status = status == null ? -1 : status;
 
             // 2. 调用服务层获取List<sbflbDTO>
             List<sbflbDTO> sbflbDTOList= changedassetService.showIndividualClassificationinAndDecrease(
-                    tableType, unitLevel, status, formDateFrom, formDateTo, accountSet
+                    tableType,  status, formDateFrom, formDateTo, accountSet
             );
 
 
@@ -338,7 +338,7 @@ public class ChangedassetController {
     @GetMapping("/statisticalTable/individualClassification/inAndDecrease/inquirePdf")
     public ResponseEntity<byte[]> getIndividualClassificationinAndDecreasePDF(
             @RequestParam(name = "tableType",required = false) String tableType,
-            @RequestParam(name = "unitLevel",required = false) Integer unitLevel,
+
             @RequestParam(name = "Financial_accounting_status", defaultValue = "-1") Integer status,
             @RequestParam(name = "formDateFrom", required = true) @DateTimeFormat(pattern = "yyyy-MM-dd") Date formDateFrom,
             @RequestParam(name = "formDateTo", required = true) @DateTimeFormat(pattern = "yyyy-MM-dd") Date formDateTo,
@@ -351,12 +351,10 @@ public class ChangedassetController {
     ) {
         try {
             // 1. 调用服务层获取树形结构数据（已完成子节点汇总）
-            IndividualZcbdbTreeNode root = changedassetService.showIndividualHouseholdinAndDecrease(
-                    tableType, unitLevel, status, formDateFrom, formDateTo, accountSet
-            );
+
             // 2. 生成PDF
             PdfGenerationService pdfService = new PdfGenerationService();
-            byte[] pdfBytes = pdfService.generateIndividualHouseholdPdf(unitLevel,root, tableName,tableUnit,tableDate,formDateFrom,formDateTo,jldw);
+            byte[] pdfBytes = pdfService.generateIndividualCategoryPdf(tableName,tableUnit,tableDate,formDateFrom,formDateTo,jldw);
 
             // 3. 构建响应
             HttpHeaders headers = new HttpHeaders();

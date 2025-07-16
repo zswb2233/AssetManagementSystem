@@ -42,5 +42,5 @@ public interface ChangedassetService extends IService<zcbdb2> {
 
     IndividualZcbdbTreeNode showIndividualHouseholdinAndDecrease(String tableType, Integer unitLevel, Integer status, Date formDateFrom, Date formDateTo, String accountSet);
 
-    List<sbflbDTO> showIndividualClassificationinAndDecrease(String tableType, Integer unitLevel, Integer status, Date formDateFrom, Date formDateTo, String accountSet);
+    List<sbflbDTO> showIndividualClassificationinAndDecrease(String tableType,  Integer status, Date formDateFrom, Date formDateTo, String accountSet);
 }

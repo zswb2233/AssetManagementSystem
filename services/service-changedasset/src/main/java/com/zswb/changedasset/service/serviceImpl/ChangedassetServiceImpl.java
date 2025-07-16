@@ -207,7 +207,7 @@ public class ChangedassetServiceImpl extends ServiceImpl<ChangedassetDao, zcbdb2
     }
 
     @Override
-    public List<sbflbDTO> showIndividualClassificationinAndDecrease(String tableType, Integer unitLevel, Integer status, Date formDateFrom, Date formDateTo, String accountSet) {
+    public List<sbflbDTO> showIndividualClassificationinAndDecrease(String tableType, Integer status, Date formDateFrom, Date formDateTo, String accountSet) {
         List<sbflb2> templist=sbflbDao.selectList(null);
         List<sbflbDTO> sbflbDTOList=new ArrayList<>();
         for(int i=0;i<templist.size();i++){
