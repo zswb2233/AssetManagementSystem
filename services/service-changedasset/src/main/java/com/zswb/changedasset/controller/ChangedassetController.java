@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage; // 新增：IPage 接口导
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.itextpdf.text.DocumentException;
 import com.zswb.model.dto.IndividualZcbdbTreeNode;
+import com.zswb.model.dto.sbflbDTO;
 import com.zswb.model.entity.zcbdb;
 import com.zswb.changedasset.service.ChangedassetService;
 // 新增：导入 models 模块的实体类
@@ -270,6 +271,80 @@ public class ChangedassetController {
             @RequestParam(name = "accountSet", defaultValue = "inCampus") String accountSet,
             //下面是打印的项
             @RequestParam(name="tableName" ,defaultValue="中国大学分户增减变动统计表") String tableName,//表头名
+            @RequestParam(name="tableUnit",defaultValue = "中国大学") String tableUnit,//制表单位
+            @RequestParam(name = "tableDate", required = true)@DateTimeFormat(pattern = "yyyy-MM-dd") Date tableDate,//制表时间
+            @RequestParam(name="jldw",defaultValue = "元") String jldw //计量单位，元与万元
+    ) {
+        try {
+            // 1. 调用服务层获取树形结构数据（已完成子节点汇总）
+            IndividualZcbdbTreeNode root = changedassetService.showIndividualHouseholdinAndDecrease(
+                    tableType, unitLevel, status, formDateFrom, formDateTo, accountSet
+            );
+            // 2. 生成PDF
+            PdfGenerationService pdfService = new PdfGenerationService();
+            byte[] pdfBytes = pdfService.generateIndividualHouseholdPdf(unitLevel,root, tableName,tableUnit,tableDate,formDateFrom,formDateTo,jldw);
+
+            // 3. 构建响应
+            HttpHeaders headers = new HttpHeaders();
+            headers
+                    .setContentType(MediaType.APPLICATION_PDF);
+            String fileName = URLEncoder.encode("分户增减变动统计表.pdf", StandardCharsets.UTF_8.name());
+            headers
+                    .setContentDispositionFormData("attachment", fileName);
+
+            return ResponseEntity.ok()
+                    .headers(headers)
+                    .body(pdfBytes);
+        } catch (Exception e) {
+            return ResponseEntity.status(500)
+                    .body(("生成PDF失败：" + e.getMessage()).getBytes());
+        }
+
+    }
+
+    // 分类增减变动统计表（返回Nacos自带的Result格式）Classification
+    @GetMapping("/statisticalTable/individualClassification/inAndDecrease/inquire")
+    public Result<List<sbflbDTO>> getIndividualClassificationinAndDecrease(
+            @RequestParam(name = "tableType",required = false) String tableType,
+            @RequestParam(name = "unitLevel",required = false) Integer unitLevel,
+            @RequestParam(name = "Financial_accounting_status", defaultValue = "-1") Integer status,
+            @RequestParam(name = "formDateFrom", required = true) @DateTimeFormat(pattern = "yyyy-MM-dd") Date formDateFrom,
+            @RequestParam(name = "formDateTo", required = true) @DateTimeFormat(pattern = "yyyy-MM-dd") Date formDateTo,
+            @RequestParam(name = "accountSet", defaultValue = "inCampus") String accountSet
+    ) {
+        try {
+            // 1. 参数默认值处理
+            tableType = tableType == null ? "分类增减变动统计表" : tableType;
+            unitLevel = unitLevel == null ? 1 : unitLevel;
+            status = status == null ? -1 : status;
+
+            // 2. 调用服务层获取List<sbflbDTO>
+            List<sbflbDTO> sbflbDTOList= changedassetService.showIndividualClassificationinAndDecrease(
+                    tableType, unitLevel, status, formDateFrom, formDateTo, accountSet
+            );
+
+
+
+            // 4. 使用Nacos的Result.success()封装数据（code=0表示成功）
+            return Result.success(sbflbDTOList);
+
+        } catch (Exception e) {
+            // 5. 异常时使用Nacos的Result.failure()返回错误信息
+            // 可根据实际场景选择ErrorCode（如SERVER_ERROR、PARAM_ERROR等）
+            return Result.failure(ErrorCode.SERVER_ERROR, new ArrayList<>());
+        }
+    }
+    // 分类增减变动统计表pdf
+    @GetMapping("/statisticalTable/individualClassification/inAndDecrease/inquirePdf")
+    public ResponseEntity<byte[]> getIndividualClassificationinAndDecreasePDF(
+            @RequestParam(name = "tableType",required = false) String tableType,
+            @RequestParam(name = "unitLevel",required = false) Integer unitLevel,
+            @RequestParam(name = "Financial_accounting_status", defaultValue = "-1") Integer status,
+            @RequestParam(name = "formDateFrom", required = true) @DateTimeFormat(pattern = "yyyy-MM-dd") Date formDateFrom,
+            @RequestParam(name = "formDateTo", required = true) @DateTimeFormat(pattern = "yyyy-MM-dd") Date formDateTo,
+            @RequestParam(name = "accountSet", defaultValue = "inCampus") String accountSet,
+            //下面是打印的项
+            @RequestParam(name="tableName" ,defaultValue="中国大学分类增减变动统计表") String tableName,//表头名
             @RequestParam(name="tableUnit",defaultValue = "中国大学") String tableUnit,//制表单位
             @RequestParam(name = "tableDate", required = true)@DateTimeFormat(pattern = "yyyy-MM-dd") Date tableDate,//制表时间
             @RequestParam(name="jldw",defaultValue = "元") String jldw //计量单位，元与万元

@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.zswb.model.dto.IndividualZcbdbTreeNode;
+import com.zswb.model.dto.sbflbDTO;
 import com.zswb.model.entity.zcbdb;
 import com.zswb.model.entity.zcbdb2;
 import com.zswb.model.vo.zcbdbVO;
@@ -40,4 +41,6 @@ public interface ChangedassetService extends IService<zcbdb2> {
 
 
     IndividualZcbdbTreeNode showIndividualHouseholdinAndDecrease(String tableType, Integer unitLevel, Integer status, Date formDateFrom, Date formDateTo, String accountSet);
+
+    List<sbflbDTO> showIndividualClassificationinAndDecrease(String tableType, Integer unitLevel, Integer status, Date formDateFrom, Date formDateTo, String accountSet);
 }
