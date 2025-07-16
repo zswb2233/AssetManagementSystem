@@ -9,9 +9,12 @@ import com.zswb.changedasset.convert.Zcbdb2OutputMapper;
 import com.zswb.changedasset.dao.ChangedassetDao;
 import com.zswb.changedasset.convert.Zcbdb2VoMapper;
 import com.zswb.changedasset.dao.DwbDao;
+import com.zswb.changedasset.dao.SbflbDao;
 import com.zswb.changedasset.service.ChangedassetService;
 import com.zswb.model.dto.IndividualZcbdbTreeNode;
+import com.zswb.model.dto.sbflbDTO;
 import com.zswb.model.entity.dwb;
+import com.zswb.model.entity.sbflb2;
 import com.zswb.model.entity.zcbdb2;
 import com.zswb.model.output.zcbdbOutput;
 import com.zswb.model.vo.zcbdbVO;
@@ -37,6 +40,9 @@ public class ChangedassetServiceImpl extends ServiceImpl<ChangedassetDao, zcbdb2
 
     @Autowired
     private DwbDao dwbDao;
+
+    @Autowired
+    private SbflbDao sbflbDao;
 
     @Override
     public Map<String, Object> getPageWithQuery(Page<zcbdb2> page, QueryWrapper<zcbdb2> queryWrapper , List<String> sortFields, List<String> sortOrders,List<String> require ) {
@@ -199,6 +205,154 @@ public class ChangedassetServiceImpl extends ServiceImpl<ChangedassetDao, zcbdb2
         return buildTreeStructure(assetChanges);
 
     }
+
+    @Override
+    public List<sbflbDTO> showIndividualClassificationinAndDecrease(String tableType, Integer status, Date formDateFrom, Date formDateTo, String accountSet) {
+        List<sbflb2> templist=sbflbDao.selectList(null);
+        List<sbflbDTO> sbflbDTOList=new ArrayList<>();
+        for(int i=0;i<templist.size();i++){
+            sbflbDTOList.add(new sbflbDTO(templist.get(i).getFldm(),templist.get(i).getFlmc()));
+        }
+        //2.找到在formDateFrom与formDateTo之间的数据。需要在在变动账表里找.
+        //期初数=期末数−本期增加数+本期减少数
+        QueryWrapper<zcbdb2> queryWrapper=new QueryWrapper<>();
+        // 按时间范围查询：变动日期在 formDateFrom 和 formDateTo 之间
+        // 按时间范围查询：变动日期 >= formDateFrom 且 <= formDateTo
+        queryWrapper.ge("change_date", formDateFrom);  // 大于等于起始日期
+        queryWrapper.le("change_date", formDateTo);    // 小于等于结束日期
+
+        // 可选：根据状态选择不同业务，但是现在仅仅一个
+//        if (status != null && status != -1) {
+//
+//        }
+//
+//        // 可选：根据账套选择不同业务，但是现在仅仅一个
+//        if (accountSet != null && !accountSet.isEmpty()) {
+//
+//        }
+
+        // 3. 执行查询
+        List<zcbdb2> assetChanges = changedassetDao.selectList(queryWrapper);
+        buildSbflbDTOList(sbflbDTOList,assetChanges);
+        return sbflbDTOList;
+    }
+
+    private void buildSbflbDTOList(List<sbflbDTO> sbflbDTOList,List<zcbdb2> assetChanges) {
+        //算所有子节点的值
+        for(zcbdb2 temp:assetChanges){
+            //先创建完子类，然后往外递归。
+            //获得状态，不同状态做不同处理
+            String status=temp.getStatus();
+            softAllClafic(status,temp,sbflbDTOList);
+        }
+        for (sbflbDTO t:sbflbDTOList){
+            t.calculateSummaryValues();
+        }
+    }
+
+    private void softAllClafic(String status, zcbdb2 temp, List<sbflbDTO> sbflbDTOList) {
+        //先获得是哪个分类的。
+        String categoryCode = temp.getCategoryCode();
+        //前两位就是分类:
+        int numCategoryCodeIndex = Integer.parseInt(categoryCode.substring(0,2))-1;
+        //此时对sbflbDTOList中的numCategoryCodeIndex操作即是正确的操作位置。
+        //初期给加上
+        sbflbDTOList.get(numCategoryCodeIndex).addNowDeAmountWithId(0,temp.getAmount());
+        sbflbDTOList.get(numCategoryCodeIndex).addNowDeCountWithId(0,temp.getBeforeCount());
+        // 根据不同状态处理资产变动
+        switch (status) {
+            case "1": // 在用
+                // 通常在用状态不涉及数量/金额变动，可能仅更新资产状态
+                sbflbDTOList.get(numCategoryCodeIndex).addNowDeAmountWithId(1,temp.getAmount());
+                sbflbDTOList.get(numCategoryCodeIndex).addNowDeCountWithId(1,temp.getBeforeCount());
+                break;
+
+            case "2": // 闲置
+                // 闲置状态不涉及数量/金额变动，可能仅更新资产状态
+
+                break;
+
+            case "3": // 待修
+                // 待修状态不涉及数量/金额变动，可能仅更新资产状态
+                break;
+
+            case "4": // 待报废
+                // 待报废状态不涉及数量/金额变动，可能仅更新资产状态
+                break;
+
+            case "5": // 丢失
+                // 丢失通常作为资产减少处理
+                sbflbDTOList.get(numCategoryCodeIndex).addNowDeAmountWithId(5,temp.getChangedAmount());
+                sbflbDTOList.get(numCategoryCodeIndex).addNowDeCountWithId(5,temp.getChangedCount());
+                break;
+
+            case "6": // 报废
+                // 报废处理，更新减少数据
+                sbflbDTOList.get(numCategoryCodeIndex).addNowDeAmountWithId(4,temp.getChangedAmount());
+                sbflbDTOList.get(numCategoryCodeIndex).addNowDeCountWithId(4,temp.getChangedCount());
+                break;
+
+            case "7": // 出售
+                // 出售处理，更新减少数据,不懂这个业务
+//                sbflbDTOList.get(numCategoryCodeIndex).addNowDeAmountWithId(5,temp.getChangedAmount());
+//                sbflbDTOList.get(numCategoryCodeIndex).addNowDeCountWithId(5,temp.getChangedCount());
+                break;
+
+            case "9": // 其它
+                // 其它变动，根据实际情况处理
+                //这里只写了减少的
+                sbflbDTOList.get(numCategoryCodeIndex).addNowDeAmountWithId(5,temp.getChangedAmount());
+                sbflbDTOList.get(numCategoryCodeIndex).addNowDeCountWithId(5,temp.getChangedCount());
+                break;
+
+            case "A": // 调入
+                // 调入处理，更新增加数据
+
+                break;
+
+            case "B": // 转入
+                // 转入处理，更新增加数据
+
+                break;
+
+            case "C": // 转出
+                // 转出处理，更新减少数据
+                sbflbDTOList.get(numCategoryCodeIndex).addNowDeAmountWithId(5,temp.getChangedAmount());
+                sbflbDTOList.get(numCategoryCodeIndex).addNowDeCountWithId(5,temp.getChangedCount());
+                break;
+
+            case "D": // 注销
+                // 注销处理，更新减少数据
+                sbflbDTOList.get(numCategoryCodeIndex).addNowDeAmountWithId(5,temp.getChangedAmount());
+                sbflbDTOList.get(numCategoryCodeIndex).addNowDeCountWithId(5,temp.getChangedCount());
+                break;
+
+            case "E": // 盘亏
+                // 盘亏处理，更新减少数据
+                sbflbDTOList.get(numCategoryCodeIndex).addNowDeAmountWithId(5,temp.getChangedAmount());
+                sbflbDTOList.get(numCategoryCodeIndex).addNowDeCountWithId(5,temp.getChangedCount());
+                break;
+
+            case "F": // 调剂
+                // 调剂处理，可能需要特殊处理，这里简化为增加
+                sbflbDTOList.get(numCategoryCodeIndex).addNowDeAmountWithId(2,temp.getChangedAmount());
+                sbflbDTOList.get(numCategoryCodeIndex).addNowDeCountWithId(2,temp.getChangedCount());
+                break;
+
+            case "G": // 对外捐赠
+                // 对外捐赠处理，更新减少数据
+                sbflbDTOList.get(numCategoryCodeIndex).addNowDeAmountWithId(5,temp.getChangedAmount());
+                sbflbDTOList.get(numCategoryCodeIndex).addNowDeCountWithId(5,temp.getChangedCount());
+                break;
+
+            default:
+                // 未知状态，记录日志或其他处理
+                break;
+
+        }
+
+    }
+
     private IndividualZcbdbTreeNode buildTreeStructure(List<zcbdb2> assetChanges ){
         //建立单位表树状关系
         IndividualZcbdbTreeNode root=buildInitTreeStructure();
